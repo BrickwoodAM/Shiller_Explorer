@@ -201,7 +201,7 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
   <div class="vintage-chart-container" id="vintage-chart"></div>
 
   <div class="section-divider"><h2>How Confident Can We Be?</h2><div class="line"></div></div>
-  <p class="section-subtitle">Using the same valuation from the sliders above, this chart shows how outcomes change across different holding periods. One-year results vary widely, while over longer periods the range narrows as returns are increasingly shaped by fundamentals. Time helps convert uncertainty into probability.</p>
+  <p class="section-subtitle">This chart keeps the starting valuation you chose above and varies how long you hold. For every month in history that began at that valuation, it shows the annualised returns investors went on to earn over one year, two years, and so on up to ten. Over short holding periods the outcomes are scattered widely; the longer the holding period, the more tightly they cluster. Time helps convert uncertainty into probability.</p>
   <div class="horizon-chart-container" id="horizon-chart"><div class="h-tooltip" id="h-tooltip"></div></div>
 
   <div class="section-divider"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
@@ -367,7 +367,7 @@ function renderMain() {
       let rows='';
       if(d.capeYield!=null) rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:#5091A5"></span>CAPE Yield</span><span class="tooltip-val" style="color:#5091A5">${formatPct(d.capeYield)}%</span></div>`;
       Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=d[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'—'}</span></div>`;});
-      if(d.fwdReturn!=null){const rc=d.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(d.fwdReturn)}%</span></div>`;}
+      if(d.fwdReturn!=null){const rc=d.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(d.fwdReturn)}%</span></div>`;}else{rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span style="font-style:italic;font-size:0.75rem;color:var(--text-muted)">10yr return: not yet known</span></div>`;}
       tt.innerHTML=`<div class="tooltip-date">${formatDate(d.date)}</div>${rows}`;tt.classList.add('visible');
       const chartRight=w;const pxRatio=px/chartRight;const cyVal=d.capeYield!=null?d.capeYield:0;const yDom=yScale.domain();const yRatio=(cyVal-yDom[0])/(yDom[1]-yDom[0]);
       let tx,ty;
@@ -400,7 +400,7 @@ function updateMainHighlight(datum) {
   let rows='';
   if(datum.capeYield!=null) rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:#5091A5"></span>CAPE Yield</span><span class="tooltip-val" style="color:#5091A5">${formatPct(datum.capeYield)}%</span></div>`;
   Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=datum[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'—'}</span></div>`;});
-  if(datum.fwdReturn!=null){const rc=datum.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(datum.fwdReturn)}%</span></div>`;}
+  if(datum.fwdReturn!=null){const rc=datum.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(datum.fwdReturn)}%</span></div>`;}else{rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span style="font-style:italic;font-size:0.75rem;color:var(--text-muted)">10yr return: not yet known</span></div>`;}
   tt.innerHTML=`<div class="tooltip-date">${formatDate(datum.date)}</div>${rows}`;tt.classList.add('visible');
   tt.style.left=(px+margin.left+16)+'px';tt.style.top='40px';
 }
@@ -1135,7 +1135,7 @@ function renderHorizonChart() {
   if (!HORIZON) return;
   const hEl = document.getElementById('horizon-chart');
   const width = hEl.clientWidth - 16;
-  const hMargin = { top: 30, right: 30, bottom: 45, left: 52 };
+  const hMargin = { top: 30, right: 112, bottom: 45, left: 52 };
   const hHeight = 400;
   const w = width - hMargin.left - hMargin.right, h = hHeight - hMargin.top - hMargin.bottom;
 
@@ -1167,8 +1167,12 @@ function renderHorizonChart() {
     return;
   }
 
-  // Fixed y-axis: ±75% regardless of data (extreme outliers may clip, that's fine)
-  const yScale = d3.scaleLinear().domain([-75, 75]).range([h, 0]);
+  // Y-axis fits the current selection so Best/Worst are never clipped off-scale,
+  // with a minimum span so narrow fans don't over-zoom.
+  const spanVals = valid.flatMap(hz => [hz.min, hz.max]);
+  const yLo = Math.min(-10, d3.min(spanVals) - 3);
+  const yHi = Math.max(15, d3.max(spanVals) + 3);
+  const yScale = d3.scaleLinear().domain([yLo, yHi]).range([h, 0]).nice();
 
   const xScale = d3.scaleLinear().domain([1, 10]).range([0, w]);
 
@@ -1223,20 +1227,25 @@ function renderHorizonChart() {
       .attr('fill', 'var(--teal)').attr('stroke', 'var(--bg-panel)').attr('stroke-width', 1.5);
   });
 
-  // End labels (right side)
+  // End labels (right side): what the 10-year distribution looks like
   const last = valid[valid.length - 1];
   if (last) {
     const labels = [
-      { val: last.max, text: `Best: ${formatDec(last.max)}%`, opacity: 0.5 },
-      { val: last.p75, text: `75th: ${formatDec(last.p75)}%`, opacity: 0.7 },
-      { val: last.mean, text: `Mean: ${formatDec(last.mean)}%`, opacity: 1, bold: true },
-      { val: last.p25, text: `25th: ${formatDec(last.p25)}%`, opacity: 0.7 },
-      { val: last.min, text: `Worst: ${formatDec(last.min)}%`, opacity: 0.5 },
-    ];
+      { val: last.max, text: `Best ${formatDec(last.max)}%`, opacity: 0.55 },
+      { val: last.p75, text: `75th pctl ${formatDec(last.p75)}%`, opacity: 0.75 },
+      { val: last.mean, text: `Mean ${formatDec(last.mean)}%`, opacity: 1, bold: true },
+      { val: last.p25, text: `25th pctl ${formatDec(last.p25)}%`, opacity: 0.75 },
+      { val: last.min, text: `Worst ${formatDec(last.min)}%`, opacity: 0.55 },
+    ].map(l => ({ ...l, y: yScale(l.val) + 3.5 })).sort((a, b) => a.y - b.y);
+    // push overlapping labels apart, then keep the stack inside the plot
+    for (let i = 1; i < labels.length; i++)
+      if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+    const overflow = labels[labels.length - 1].y - (h + 3);
+    if (overflow > 0) labels.forEach(l => l.y -= overflow);
     labels.forEach(l => {
-      g.append('text').attr('x', w + 6).attr('y', yScale(l.val) + 3.5)
+      g.append('text').attr('x', w + 8).attr('y', l.y)
         .attr('font-family', 'JetBrains Mono, monospace')
-        .attr('font-size', '8px').attr('font-weight', l.bold ? '600' : '400')
+        .attr('font-size', '10.5px').attr('font-weight', l.bold ? '600' : '400')
         .attr('fill', 'var(--teal)').attr('opacity', l.opacity)
         .text(l.text);
     });

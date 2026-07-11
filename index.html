@@ -1071,6 +1071,31 @@ function renderHorizonControls() {
     </div>
     <button class="series-btn" id="today-yield-btn" title="Set the slider to the current CAPE yield">Today: ${formatPct(todayCy)}%</button>`;
 
+  // Range inputs snap clicks to the nearest step, so a click inside the current
+  // step's (wide) zone does nothing. If a click to the left/right of the thumb
+  // wouldn't move the slider, nudge it one step in that direction instead.
+  ['yield-slider','window-slider'].forEach(id => {
+    const s = document.getElementById(id);
+    s.addEventListener('pointerdown', function(ev) {
+      const before = this.value;
+      const min = parseFloat(this.min), max = parseFloat(this.max), step = parseFloat(this.step);
+      const rect = this.getBoundingClientRect();
+      const thumbW = 16;
+      const frac = (parseFloat(before) - min) / (max - min);
+      const thumbX = rect.left + frac * (rect.width - thumbW) + thumbW / 2;
+      const dir = ev.clientX > thumbX + 1 ? 1 : (ev.clientX < thumbX - 1 ? -1 : 0);
+      setTimeout(() => {
+        if (this.value === before && dir !== 0) {
+          const nv = Math.min(max, Math.max(min, parseFloat(before) + dir * step));
+          if (nv !== parseFloat(before)) {
+            this.value = nv;
+            this.dispatchEvent(new window.Event('input', { bubbles: true }));
+          }
+        }
+      }, 0);
+    });
+  });
+
   document.getElementById('today-yield-btn').addEventListener('click', function() {
     hYield = Math.min(14, Math.max(2, Math.round(todayCy * 4) / 4));
     renderHorizonControls();

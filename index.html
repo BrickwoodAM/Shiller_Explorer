@@ -71,6 +71,8 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .annotation-line { stroke:rgba(15,38,64,0.15); stroke-width:1; stroke-dasharray:2,3; }
 .annotation-text { font-family:'Montserrat',sans-serif; font-size:10px; fill:var(--text-secondary); }
 .context-label { font-family:'JetBrains Mono',monospace; font-size:10px; fill:var(--text-muted); letter-spacing:0.05em; }
+.brush .selection { fill:rgba(80,145,165,0.10); stroke:var(--teal); stroke-opacity:0.6; stroke-width:1; }
+.brush .handle { fill:var(--teal); opacity:0.7; rx:2; }
 
 .section-divider { display:flex; align-items:center; gap:1rem; margin:2.5rem 0 1.5rem; }
 .section-divider h2 { font-family:'Bellefair',Georgia,serif; font-size:1.6rem; font-weight:400; white-space:nowrap; color:var(--teal); }
@@ -213,7 +215,7 @@ By contrast, returns driven by underlying fundamentals tend to be more stable ov
       Source: Professor Shiller's data (available at <a href="https://shillerdata.com" target="_blank">ShillerData.com</a>) from 01.01.1871 to <span id="source-end-date">&hellip;</span>. Robert J. Shiller, <em>Irrational Exuberance</em>, Princeton University Press.
       CAPE Yield = 1/CAPE = 10-year average real earnings ÷ real price. Returns are annualized real total returns (dividends reinvested, inflation-adjusted). Recession shading from NBER.
     </div>
-    <div class="instructions"><kbd>drag</kbd> timeline to zoom &middot; <kbd>hover</kbd> for linked detail &middot; <kbd>slide</kbd> to explore valuations</div>
+    <div class="instructions"><kbd>drag</kbd> the strip to set the date range &middot; <kbd>hover</kbd> for linked detail &middot; <kbd>click</kbd> the scatter to pin a month &middot; <kbd>slide</kbd> to explore valuations</div>
   </div>
 </div>
 
@@ -285,7 +287,7 @@ const SERIES = {
 };
 let brushExtent = null;
 const mainEl = document.getElementById('main-chart'), returnEl = document.getElementById('return-chart');
-const margin={top:20,right:30,bottom:30,left:52}, brushMargin={top:8,right:30,bottom:20,left:52}, retMargin={top:30,right:30,bottom:40,left:52};
+const margin={top:20,right:30,bottom:30,left:52}, brushMargin={top:22,right:30,bottom:20,left:52}, retMargin={top:30,right:30,bottom:40,left:52};
 function getWidth() { return mainEl.clientWidth - 16; }
 function getMainHeight() { return Math.min(480,Math.max(320,window.innerHeight*0.38)); }
 
@@ -347,6 +349,10 @@ function renderMain() {
   g.append('g').attr('class','axis-x').attr('transform',`translate(0,${h})`).call(d3.axisBottom(xScale).ticks(d3.timeYear.every(Math.max(1,Math.round(filtered.length/120)))).tickSize(-h).tickPadding(8));
   g.append('g').attr('class','axis-y-left').call(d3.axisLeft(yScale).ticks(6).tickSize(0).tickPadding(8).tickFormat(d=>d+'%'));
   g.append('text').attr('class','axis-label').attr('transform','rotate(-90)').attr('x',-h/2).attr('y',-40).attr('text-anchor','middle').style('fill','var(--accent-cape)').text(['CAPE Yield',...active.map(s=>s.label)].join(' / '));
+  g.append('text').attr('x',w).attr('y',-8).attr('text-anchor','end')
+    .attr('font-family','JetBrains Mono,monospace').attr('font-size','9px')
+    .attr('fill','var(--text-muted)').attr('opacity',0.85)
+    .text('HOVER FOR MONTH DETAIL \u00b7 SET THE DATE RANGE IN THE STRIP BELOW');
   [{date:'1929-09-01',label:'1929 Crash'},{date:'2000-03-01',label:'Dot-com'},{date:'2008-10-01',label:'GFC'},{date:'2020-03-01',label:'COVID'}].forEach(a=>{const d=parseDate(a.date);if(d>=xScale.domain()[0]&&d<=xScale.domain()[1]){const x=xScale(d);g.append('line').attr('class','annotation-line').attr('x1',x).attr('x2',x).attr('y1',0).attr('y2',h);g.append('text').attr('class','annotation-text').attr('x',x+4).attr('y',14).text(a.label);}});
 
   const cl=g.append('line').attr('class','crosshair-line').attr('y1',0).attr('y2',h).style('display','none');
@@ -401,14 +407,21 @@ function updateMainHighlight(datum) {
 
 // ===== BRUSH =====
 function renderBrush() {
-  const width=getWidth(),w=width-brushMargin.left-brushMargin.right,h=60-brushMargin.top-brushMargin.bottom;
-  d3.select('#brush-chart svg').remove();const svg=d3.select('#brush-chart').append('svg').attr('width',width).attr('height',60);const g=svg.append('g').attr('transform',`translate(${brushMargin.left},${brushMargin.top})`);
+  const width=getWidth(),w=width-brushMargin.left-brushMargin.right,h=74-brushMargin.top-brushMargin.bottom;
+  d3.select('#brush-chart svg').remove();const svg=d3.select('#brush-chart').append('svg').attr('width',width).attr('height',74);const g=svg.append('g').attr('transform',`translate(${brushMargin.left},${brushMargin.top})`);
   const xS=d3.scaleTime().domain(d3.extent(data,d=>d.date)).range([0,w]);const cyD=data.filter(d=>d.capeYield!=null);const yS=d3.scaleLinear().domain([0,d3.max(cyD,d=>d.capeYield)]).range([h,0]);
   g.append('path').datum(cyD).attr('d',d3.area().x(d=>xS(d.date)).y0(h).y1(d=>yS(d.capeYield)).curve(d3.curveMonotoneX)).attr('fill','rgba(80,145,165,0.12)').attr('stroke','rgba(80,145,165,0.4)').attr('stroke-width',1);
   g.append('g').attr('class','axis-x').attr('transform',`translate(0,${h})`).call(d3.axisBottom(xS).ticks(10).tickSize(0).tickPadding(6));
-  g.append('text').attr('class','context-label').attr('x',0).attr('y',-2).text('DRAG TO ZOOM');
-  const brush=d3.brushX().extent([[0,0],[w,h]]).on('brush end',function(ev){brushExtent=ev.selection?ev.selection.map(xS.invert):null;renderMain();renderMetrics();});
+  g.append('text').attr('class','context-label').attr('x',0).attr('y',-9).text('DATE RANGE \u2014 DRAG TO SELECT \u00b7 CLICK OUTSIDE THE BOX TO RESET');
+  const rangeLabel=g.append('text').attr('class','context-label').attr('x',w).attr('y',-9).attr('text-anchor','end').style('fill','var(--teal)').style('font-weight','500');
+  const fmtY=d3.timeFormat('%Y');
+  const fullSpan=`SHOWING ${fmtY(xS.domain()[0])} \u2013 ${fmtY(xS.domain()[1])} (ALL DATA)`;
+  function updateRangeLabel(){
+    rangeLabel.text(brushExtent?`SHOWING ${fmtY(brushExtent[0])} \u2013 ${fmtY(brushExtent[1])}`:fullSpan);
+  }
+  const brush=d3.brushX().extent([[0,0],[w,h]]).on('brush end',function(ev){brushExtent=ev.selection?ev.selection.map(xS.invert):null;updateRangeLabel();renderMain();renderMetrics();});
   const bG=g.append('g').attr('class','brush').call(brush);const ago=new Date(data[data.length-1].date);ago.setFullYear(ago.getFullYear()-50);bG.call(brush.move,[xS(ago),xS(data[data.length-1].date)]);
+  updateRangeLabel();
 }
 
 // ===== RETURN SCATTER =====

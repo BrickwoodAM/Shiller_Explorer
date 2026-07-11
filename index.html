@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shiller Market Explorer — Brickwood Asset Management</title>
+<title>Shiller Market Explorer | Brickwood Asset Management</title>
 <meta name="description" content="155 years of U.S. stock market valuations: CAPE yield, forward returns and return decomposition, using Prof. Robert J. Shiller's data. Updated monthly.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
@@ -78,9 +78,9 @@ html { scroll-behavior:smooth; }
 .side-nav a:hover .nav-dot { border-color:var(--teal); }
 .side-nav a.active .nav-dot { background:var(--teal); border-color:var(--teal); transform:scale(1.25); }
 .nav-label { font-family:'Montserrat',sans-serif; font-size:0.7rem; font-weight:500; letter-spacing:0.04em; color:var(--text-secondary); background:var(--bg-panel); border:1px solid var(--border); border-radius:5px; padding:0.25rem 0.55rem; white-space:nowrap; opacity:0; transform:translateX(-4px); transition:all 0.15s; pointer-events:none; box-shadow:0 1px 3px rgba(15,38,64,0.08); }
-.side-nav a:hover .nav-label, .side-nav a.active .nav-label { opacity:1; transform:translateX(0); }
+.side-nav a:hover .nav-label { opacity:1; transform:translateX(0); }
 .side-nav a.active .nav-label { color:var(--teal); }
-@media (max-width:1200px) { .side-nav { display:none; } }
+@media (max-width:1480px) { .side-nav { display:none; } }
 .brush .selection { fill:rgba(80,145,165,0.10); stroke:var(--teal); stroke-opacity:0.6; stroke-width:1; }
 .brush .handle { fill:var(--teal); opacity:0.7; rx:2; }
 
@@ -197,8 +197,8 @@ html { scroll-behavior:smooth; }
 <div class="container">
   <header>
     <h1>The Importance of Valuation</h1>
-    <p class="subtitle">155 years of U.S. stock market valuations, measured by CAPE Yield — the cyclically adjusted real earnings per dollar invested.</p>
-    <p class="byline">Data: Prof. Robert J. Shiller, Yale University &mdash; Updated Monthly</p>
+    <p class="subtitle">155 years of U.S. stock market valuations, measured by CAPE Yield: the cyclically adjusted real earnings per dollar invested.</p>
+    <p class="byline">Data: Prof. Robert J. Shiller, Yale University &middot; Updated Monthly</p>
   </header>
 
   <div class="metrics-bar" id="metrics-bar"></div>
@@ -207,13 +207,13 @@ html { scroll-behavior:smooth; }
   <div class="brush-context" id="brush-chart"></div>
 
   <div class="section-divider" id="sec-what"><h2>What CAPE Yield Tells Us</h2><div class="line"></div></div>
-  <p class="section-subtitle">Since 1881, we know the CAPE yield each month and the real total return over the following 10 years. Higher yields (cheaper markets) have historically led to better future returns. Hover over the timeline to explore what happened from any starting month.</p>
+  <p class="section-subtitle">Since 1881, we can measure the CAPE yield of the US stock market, and track the real total return over the following 10 years. Higher yields (cheaper markets) have historically led to better future returns. Hover over the timeline to explore what happened from any starting month.</p>
   <div class="bucket-status" id="bucket-status"></div>
   <div class="return-chart-container" id="return-chart"><div class="return-callout" id="return-callout"></div></div>
 
 
   <div class="section-divider" id="sec-pick"><h2>Pick a Starting Valuation</h2><div class="line"></div></div>
-  <p class="section-subtitle">Use the sliders to choose any starting CAPE yield &mdash; today's, or any other. Every month in history that began near that level stays highlighted while the rest fade, showing the full spread of what the next 10 years actually delivered from that starting point.</p>
+  <p class="section-subtitle">Use the sliders to choose any starting CAPE yield, including today's. The months that began near that level stay highlighted, and the chart shows the range of 10-year returns that followed.</p>
   <div class="horizon-controls" id="horizon-controls"></div>
   <div class="vintage-chart-container" id="vintage-chart"></div>
 
@@ -223,7 +223,7 @@ html { scroll-behavior:smooth; }
 
   <div class="section-divider" id="sec-why"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
   <p class="section-subtitle">Total return has two parts: the fundamental return the businesses deliver (income plus earnings growth), and the re-rating or de-rating investors apply to it.
-High valuations usually occur when the outlook is favourable. Yet history shows almost no relationship between the valuation you start at and the fundamentals that follow &mdash; the teal dots lie nearly flat. What starting valuation does predict is the rating change: expensive markets tend to be followed by de-rating, and cheap markets by re-rating. That &mdash; not better fundamentals &mdash; is why starting yield matters.</p>
+High valuations usually occur when the outlook is favourable. Yet history shows almost no relationship between the valuation you start at and the fundamentals that follow. The teal dots lie nearly flat. What starting valuation does predict is the rating change: expensive markets tend to be followed by de-rating, and cheap markets by re-rating. That, not better fundamentals, is why starting yield matters.</p>
   <div class="controls-row"><div class="series-toggles" id="rerating-toggles"></div></div>
   <div class="decomp-chart-container" id="rerating-chart"></div>
 
@@ -258,8 +258,8 @@ try {
   console.error('Data load failed:', err);
   document.getElementById('main-chart').innerHTML =
     '<p style="padding:3rem;color:var(--text-secondary)">Could not load data (' +
-    err.message + '). If you opened this file directly from disk, serve it over HTTP instead ' +
-    '&mdash; browsers block local file fetches.</p>';
+    err.message + '). If you opened this file directly from disk, serve it over HTTP instead; ' +
+    'browsers block local file fetches.</p>';
   return;
 }
 
@@ -336,7 +336,7 @@ function renderControls() {
 function renderBucketStatus(hl) {
   document.getElementById('bucket-status').innerHTML = bucketStats.map(b=>{
     const h=hl&&b.label===hl.label;
-    return `<div class="bucket-card ${h?'highlighted':''}"><div class="bucket-range">CAPE Yield ${b.label}</div><div class="bucket-stat-main" style="color:${h?b.color:'var(--text-secondary)'}">${b.mean!=null?formatDec(b.mean)+'%':'—'}</div><div class="bucket-stat-n">n = ${b.n} months</div></div>`;
+    return `<div class="bucket-card ${h?'highlighted':''}"><div class="bucket-range">CAPE Yield ${b.label}</div><div class="bucket-stat-main" style="color:${h?b.color:'var(--text-secondary)'}">${b.mean!=null?formatDec(b.mean)+'%':'\u2013'}</div><div class="bucket-stat-n">n = ${b.n} months</div></div>`;
   }).join('');
 }
 
@@ -383,13 +383,13 @@ function renderMain() {
       Object.entries(SERIES).forEach(([k,s])=>{if(!s.active||d[s.field]==null)return;cd.append('circle').attr('cx',px).attr('cy',yScale(d[s.field])).attr('r',4).attr('fill',s.color).attr('stroke','var(--bg)').attr('stroke-width',2);});
       let rows='';
       if(d.capeYield!=null) rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:#5091A5"></span>CAPE Yield</span><span class="tooltip-val" style="color:#5091A5">${formatPct(d.capeYield)}%</span></div>`;
-      Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=d[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'—'}</span></div>`;});
+      Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=d[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'\u2013'}</span></div>`;});
       if(d.fwdReturn!=null){const rc=d.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(d.fwdReturn)}%</span></div>`;}else{rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span style="font-style:italic;font-size:0.75rem;color:var(--text-muted)">10yr return: not yet known</span></div>`;}
       tt.innerHTML=`<div class="tooltip-date">${formatDate(d.date)}</div>${rows}`;tt.classList.add('visible');
       const chartRight=w;const pxRatio=px/chartRight;const cyVal=d.capeYield!=null?d.capeYield:0;const yDom=yScale.domain();const yRatio=(cyVal-yDom[0])/(yDom[1]-yDom[0]);
       let tx,ty;
       if(pxRatio>0.55&&yRatio>0.55){
-        // Point is in top-right quadrant — place tooltip in top-left of chart
+        // Point is in top-right quadrant: place tooltip in top-left of chart
         tx=margin.left+12;ty=40;
       } else {
         tx=px+margin.left+16;if(tx+250>mainEl.clientWidth-10)tx=px+margin.left-266;
@@ -416,7 +416,7 @@ function updateMainHighlight(datum) {
   Object.entries(SERIES).forEach(([k,s])=>{if(!s.active||datum[s.field]==null)return;cd.append('circle').attr('cx',px).attr('cy',yScale(datum[s.field])).attr('r',4).attr('fill',s.color).attr('stroke','var(--bg)').attr('stroke-width',2);});
   let rows='';
   if(datum.capeYield!=null) rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:#5091A5"></span>CAPE Yield</span><span class="tooltip-val" style="color:#5091A5">${formatPct(datum.capeYield)}%</span></div>`;
-  Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=datum[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'—'}</span></div>`;});
+  Object.entries(SERIES).forEach(([k,s])=>{if(!s.active)return;const v=datum[s.field];rows+=`<div class="tooltip-row"><span class="tooltip-label"><span class="tooltip-dot" style="background:${s.color}"></span>${s.label}</span><span class="tooltip-val" style="color:${s.color}">${v!=null?formatPct(v)+'%':'\u2013'}</span></div>`;});
   if(datum.fwdReturn!=null){const rc=datum.fwdReturn>=0?'var(--accent-return-pos)':'var(--accent-return-neg)';rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span class="tooltip-label"><span class="tooltip-dot" style="background:${rc}"></span>10yr Fwd Return</span><span class="tooltip-val" style="color:${rc}">${formatDec(datum.fwdReturn)}%</span></div>`;}else{rows+=`<div class="tooltip-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><span style="font-style:italic;font-size:0.75rem;color:var(--text-muted)">10yr return: not yet known</span></div>`;}
   tt.innerHTML=`<div class="tooltip-date">${formatDate(datum.date)}</div>${rows}`;tt.classList.add('visible');
   tt.style.left=(px+margin.left+16)+'px';tt.style.top='40px';
@@ -429,7 +429,7 @@ function renderBrush() {
   const xS=d3.scaleTime().domain(d3.extent(data,d=>d.date)).range([0,w]);const cyD=data.filter(d=>d.capeYield!=null);const yS=d3.scaleLinear().domain([0,d3.max(cyD,d=>d.capeYield)]).range([h,0]);
   g.append('path').datum(cyD).attr('d',d3.area().x(d=>xS(d.date)).y0(h).y1(d=>yS(d.capeYield)).curve(d3.curveMonotoneX)).attr('fill','rgba(80,145,165,0.12)').attr('stroke','rgba(80,145,165,0.4)').attr('stroke-width',1);
   g.append('g').attr('class','axis-x').attr('transform',`translate(0,${h})`).call(d3.axisBottom(xS).ticks(10).tickSize(0).tickPadding(6));
-  g.append('text').attr('class','context-label').attr('x',0).attr('y',-9).text('DATE RANGE \u2014 DRAG TO SELECT \u00b7 CLICK OUTSIDE THE BOX TO RESET');
+  g.append('text').attr('class','context-label').attr('x',0).attr('y',-9).text('DATE RANGE: DRAG TO SELECT \u00b7 CLICK OUTSIDE THE BOX TO RESET');
   const rangeLabel=g.append('text').attr('class','context-label').attr('x',w).attr('y',-9).attr('text-anchor','end').style('fill','var(--teal)').style('font-weight','500');
   const fmtY=d3.timeFormat('%Y');
   const fullSpan=`SHOWING ${fmtY(xS.domain()[0])} \u2013 ${fmtY(xS.domain()[1])} (ALL DATA)`;
@@ -493,13 +493,13 @@ function renderReturnChart() {
   const bounds=boundG.selectAll('line').data(EDGES.slice(1,-1)).join('line')
     .attr('y1',0).attr('y2',h).attr('stroke','rgba(15,38,64,0.10)').attr('stroke-width',1);
 
-  // Monthly dots — Brickwood monochrome; separation comes from the columns
+  // Monthly dots (Brickwood monochrome); separation comes from the columns
   const dots=dotG.selectAll('circle').data(sd).join('circle')
     .attr('class','scatter-dot').attr('r',2)
     .attr('fill','var(--dark-navy)').attr('stroke','none')
     .attr('opacity',0.13);
 
-  // Labelled landmark dots — notable years that anchor the data to memory
+  // Labelled landmark dots: notable years that anchor the data to memory
   const landmarks=[
     {y:1881,m:1},{y:1901,m:1},{y:1907,m:10},{y:1921,m:6},{y:1929,m:9},{y:1932,m:6},
     {y:1937,m:3},{y:1942,m:4},{y:1949,m:6},{y:1957,m:10},{y:1966,m:1},{y:1974,m:10},
@@ -640,7 +640,7 @@ function updateReturnHighlight(datum) {
   }
   const bk=getBucket(datum.capeYield),bs=bucketStats.find(b=>b.label===bk?.label);
   // The average is the message: lift the bucket's bar (the card above highlights too);
-  // the dots stay light — only the selected month gets a marker below.
+  // the dots stay light; only the selected month gets a marker below.
   g.selectAll('.mean-bar')
     .attr('opacity',b=>b.label===bk?.label?0.9:0.65)
     .attr('stroke-opacity',b=>b.label===bk?.label?0.8:0.35);

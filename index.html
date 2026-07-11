@@ -1069,6 +1069,15 @@ function renderVintageChart() {
 let hYield = 5.0;
 let hWindow = 1.0;
 
+function updateHorizonSummary() {
+  const lo = hYield - hWindow, hi = hYield + hWindow;
+  const n = HORIZON ? HORIZON.filter(d => d.cy >= lo && d.cy < hi).length : 0;
+  const eN = document.querySelector('#horizon-controls .hs-n');
+  if (eN) eN.textContent = `${n} months`;
+  const eR = document.getElementById('hs-range');
+  if (eR) eR.textContent = `${formatPct(lo)}% \u2013 ${formatPct(hi)}%`;
+}
+
 function renderHorizonControls() {
   const el = document.getElementById('horizon-controls');
   const lo = hYield - hWindow, hi = hYield + hWindow;
@@ -1092,7 +1101,7 @@ function renderHorizonControls() {
     </div>
     <div class="horizon-summary">
       Matching: <span class="hs-n">${n} months</span><br>
-      Range: ${formatPct(lo)}% \u2013 ${formatPct(hi)}%
+      Range: <span id="hs-range">${formatPct(lo)}% \u2013 ${formatPct(hi)}%</span>
     </div>
     <button class="series-btn" id="today-yield-btn" title="Set the slider to the current CAPE yield">Today: ${formatPct(todayCy)}%</button>`;
 
@@ -1102,6 +1111,12 @@ function renderHorizonControls() {
   ['yield-slider','window-slider'].forEach(id => {
     const s = document.getElementById(id);
     s.addEventListener('pointerdown', function(ev) {
+      // While dragging a slider, the side nav must not swallow the release
+      const nav = document.getElementById('side-nav');
+      if (nav) {
+        nav.style.pointerEvents = 'none';
+        window.addEventListener('pointerup', () => { nav.style.pointerEvents = ''; }, { once: true });
+      }
       const before = this.value;
       const min = parseFloat(this.min), max = parseFloat(this.max), step = parseFloat(this.step);
       const rect = this.getBoundingClientRect();
@@ -1132,7 +1147,7 @@ function renderHorizonControls() {
   document.getElementById('yield-slider').addEventListener('input', function() {
     hYield = parseFloat(this.value);
     document.getElementById('yield-val').textContent = formatPct(hYield) + '%';
-    renderHorizonControls();
+    updateHorizonSummary(); // in place: rebuilding the controls mid-drag breaks the drag
     renderHorizonChart();
     renderMain();
     renderReturnChart();
@@ -1141,7 +1156,7 @@ function renderHorizonControls() {
   document.getElementById('window-slider').addEventListener('input', function() {
     hWindow = parseFloat(this.value);
     document.getElementById('window-val').textContent = '\u00b1 ' + formatPct(hWindow) + '%';
-    renderHorizonControls();
+    updateHorizonSummary();
     renderHorizonChart();
     renderMain();
     renderReturnChart();
@@ -1298,7 +1313,8 @@ function renderHorizonChart() {
         tt.classList.add('visible');
         const rect = hEl.getBoundingClientRect();
         let tx = xScale(hz.yr) + hMargin.left + 16;
-        if (tx + 210 > rect.width) tx = xScale(hz.yr) + hMargin.left - 220;
+        // Flip left before the tooltip can enter the end-label column on the right
+        if (tx + 210 > rect.width - hMargin.right) tx = xScale(hz.yr) + hMargin.left - 220;
         tt.style.left = tx + 'px';
         tt.style.top = '30px';
       })

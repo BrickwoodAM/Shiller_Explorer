@@ -406,70 +406,168 @@ function renderBrush() {
 }
 
 // ===== RETURN SCATTER =====
+let pinnedReturn = null;
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && pinnedReturn) {
+    pinnedReturn = null;
+    updateReturnHighlight(null); updateMainHighlight(null); updateReratingHighlight(null);
+  }
+});
+
 function renderReturnChart() {
   const width=returnEl.clientWidth-16,w=width-retMargin.left-retMargin.right,h=340-retMargin.top-retMargin.bottom;
-  d3.select('#return-chart svg').remove();const svg=d3.select('#return-chart').append('svg').attr('width',width).attr('height',340);const g=svg.append('g').attr('transform',`translate(${retMargin.left},${retMargin.top})`);
+  d3.select('#return-chart svg').remove();
+  const svg=d3.select('#return-chart').append('svg').attr('width',width).attr('height',340);
+  const g=svg.append('g').attr('transform',`translate(${retMargin.left},${retMargin.top})`);
   const sd=data.filter(d=>d.capeYield!=null&&d.fwdReturn!=null);
-  const xS=d3.scaleLinear().domain([0,d3.max(sd,d=>d.capeYield)*1.05]).range([0,w]).nice();const yS=d3.scaleLinear().domain([d3.min(sd,d=>d.fwdReturn)-1,d3.max(sd,d=>d.fwdReturn)+1]).range([h,0]).nice();
-  yS.ticks(8).forEach(t=>g.append('line').attr('class','grid-line').attr('x1',0).attr('x2',w).attr('y1',yS(t)).attr('y2',yS(t)));
-  g.append('line').attr('x1',0).attr('x2',w).attr('y1',yS(0)).attr('y2',yS(0)).attr('stroke','rgba(15,38,64,0.2)').attr('stroke-width',1);
-  BUCKETS.forEach(b=>{const x0=xS(Math.max(b.lo,0)),x1=xS(Math.min(b.hi,xS.domain()[1]));if(x1>x0){g.append('rect').attr('x',x0).attr('width',x1-x0).attr('y',0).attr('height',h).attr('fill',b.color).attr('opacity',0.04);g.append('text').attr('x',(x0+x1)/2).attr('y',-8).attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace').attr('font-size','9px').attr('fill',b.color).attr('opacity',0.6).text(b.label);}});
-  g.selectAll('.sd').data(sd).join('circle').attr('class','scatter-dot').attr('cx',d=>xS(d.capeYield)).attr('cy',d=>yS(d.fwdReturn)).attr('r',2.5).attr('fill',d=>{const b=getBucket(d.capeYield);return b?b.color:'#888';}).attr('opacity',0.35);
+  const xS0=d3.scaleLinear().domain([0,d3.max(sd,d=>d.capeYield)*1.05]).range([0,w]).nice();
+  const yS0=d3.scaleLinear().domain([d3.min(sd,d=>d.fwdReturn)-1,d3.max(sd,d=>d.fwdReturn)+1]).range([h,0]).nice();
+  let zx=xS0, zy=yS0;
+
+  svg.append('defs').append('clipPath').attr('id','return-scatter-clip')
+    .append('rect').attr('width',w).attr('height',h);
+
+  // All plot content lives in a clipped group so zooming never spills over the axes
+  const plotG=g.append('g').attr('clip-path','url(#return-scatter-clip)');
+  const gridG=plotG.append('g');
+  const zeroLine=plotG.append('line').attr('stroke','rgba(15,38,64,0.2)').attr('stroke-width',1);
+  const bandG=plotG.append('g');
+  const statG=plotG.append('g');
+  const dotG=plotG.append('g');
+  const lmG=plotG.append('g');
+
+  // Bucket shading, IQR boxes and median lines
+  const bands=bandG.selectAll('rect').data(BUCKETS).join('rect')
+    .attr('y',0).attr('height',h).attr('fill',b=>b.color).attr('opacity',0.04);
+  const stats=bucketStats.filter(b=>b.n);
+  const iqrBoxes=statG.selectAll('rect').data(stats).join('rect')
+    .attr('fill',b=>b.color).attr('opacity',0.08).attr('stroke',b=>b.color)
+    .attr('stroke-width',0.5).attr('stroke-opacity',0.3).attr('rx',2);
+  const medLines=statG.selectAll('line').data(stats).join('line')
+    .attr('stroke',b=>b.color).attr('stroke-width',2).attr('opacity',0.7);
+
+  // Monthly dots
+  const dots=dotG.selectAll('circle').data(sd).join('circle')
+    .attr('class','scatter-dot').attr('r',2.5)
+    .attr('fill',d=>{const b=getBucket(d.capeYield);return b?b.color:'#888';})
+    .attr('opacity',0.35);
 
   // Labelled landmark dots — notable years that anchor the data to memory
-  const landmarks = [
-    {y:1881,m:1,label:'1881'},{y:1901,m:1,label:'1901'},{y:1907,m:10,label:'1907'},
-    {y:1921,m:6,label:'1921'},{y:1929,m:9,label:'1929'},{y:1932,m:6,label:'1932'},
-    {y:1937,m:3,label:'1937'},{y:1942,m:4,label:'1942'},{y:1949,m:6,label:'1949'},
-    {y:1957,m:10,label:'1957'},{y:1966,m:1,label:'1966'},{y:1974,m:10,label:'1974'},
-    {y:1982,m:8,label:'1982'},{y:1987,m:8,label:'1987'},{y:1994,m:1,label:'1994'},
-    {y:2000,m:3,label:'2000'},{y:2003,m:3,label:'2003'},{y:2007,m:10,label:'2007'},
-    {y:2009,m:3,label:'2009'},{y:2016,m:1,label:'2016'},{y:2020,m:3,label:'2020'},
+  const landmarks=[
+    {y:1881,m:1},{y:1901,m:1},{y:1907,m:10},{y:1921,m:6},{y:1929,m:9},{y:1932,m:6},
+    {y:1937,m:3},{y:1942,m:4},{y:1949,m:6},{y:1957,m:10},{y:1966,m:1},{y:1974,m:10},
+    {y:1982,m:8},{y:1987,m:8},{y:1994,m:1},{y:2000,m:3},{y:2003,m:3},{y:2007,m:10},
+    {y:2009,m:3},{y:2016,m:1},{y:2020,m:3},
   ];
-  const fmtLm = d3.timeFormat('%Y-%m-%d');
-  landmarks.forEach(lm => {
-    const ds = `${lm.y}-${String(lm.m).padStart(2,'0')}-01`;
-    const pt = sd.find(d => fmtLm(d.date) === ds);
-    if (!pt) return;
-    const px = xS(pt.capeYield), py = yS(pt.fwdReturn);
-    g.append('circle').attr('cx',px).attr('cy',py).attr('r',4.5).attr('fill','none').attr('stroke','rgba(15,38,64,0.5)').attr('stroke-width',1.2);
-    // Nudge label to avoid overlap — alternate above/below
-    const above = pt.fwdReturn > d3.median(sd, d=>d.fwdReturn);
-    g.append('text').attr('x',px).attr('y', above ? py - 8 : py + 13).attr('text-anchor','middle')
-      .attr('font-family','JetBrains Mono,monospace').attr('font-size','8px').attr('fill','rgba(15,38,64,0.5)').text(lm.label);
-  });
-  bucketStats.forEach(b=>{if(!b.n)return;const x0=xS(Math.max(b.lo,0)),x1=xS(Math.min(b.hi===100?xS.domain()[1]:b.hi,xS.domain()[1]));g.append('line').attr('x1',x0+4).attr('x2',x1-4).attr('y1',yS(b.median)).attr('y2',yS(b.median)).attr('stroke',b.color).attr('stroke-width',2).attr('opacity',0.7);g.append('rect').attr('x',x0+4).attr('width',x1-x0-8).attr('y',yS(b.p75)).attr('height',yS(b.p25)-yS(b.p75)).attr('fill',b.color).attr('opacity',0.08).attr('stroke',b.color).attr('stroke-width',0.5).attr('stroke-opacity',0.3).attr('rx',2);});
-  g.append('g').attr('class','axis-x').attr('transform',`translate(0,${h})`).call(d3.axisBottom(xS).ticks(10).tickSize(0).tickPadding(8).tickFormat(d=>d+'%')).selectAll('text').style('fill','var(--text-muted)');
-  g.append('g').attr('class','axis-y-left').call(d3.axisLeft(yS).ticks(8).tickSize(0).tickPadding(8).tickFormat(d=>d+'%')).selectAll('text').style('fill','var(--text-secondary)');
+  const fmtLm=d3.timeFormat('%Y-%m-%d');
+  const medFwd=d3.median(sd,d=>d.fwdReturn);
+  const lmPts=landmarks.map(lm=>{
+    const ds=`${lm.y}-${String(lm.m).padStart(2,'0')}-01`;
+    const pt=sd.find(d=>fmtLm(d.date)===ds);
+    return pt?{pt,label:String(lm.y),above:pt.fwdReturn>medFwd}:null;
+  }).filter(Boolean);
+  const lmCircles=lmG.selectAll('circle').data(lmPts).join('circle')
+    .attr('r',4.5).attr('fill','none').attr('stroke','rgba(15,38,64,0.5)').attr('stroke-width',1.2);
+  const lmLabels=lmG.selectAll('text').data(lmPts).join('text')
+    .attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
+    .attr('font-size','8px').attr('fill','rgba(15,38,64,0.5)').text(d=>d.label);
+
+  // Bucket labels along the top (kept outside the clip so they sit in the margin)
+  const bandLabels=g.append('g').selectAll('text').data(BUCKETS).join('text')
+    .attr('y',-8).attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
+    .attr('font-size','9px').attr('fill',b=>b.color).text(b=>b.label);
+
+  // Axes and labels
+  const gx=g.append('g').attr('class','axis-x').attr('transform',`translate(0,${h})`);
+  const gy=g.append('g').attr('class','axis-y-left');
   g.append('text').attr('class','axis-label').attr('x',w/2).attr('y',h+34).attr('text-anchor','middle').style('fill','var(--text-muted)').text('STARTING CAPE YIELD');
   g.append('text').attr('class','axis-label').attr('transform','rotate(-90)').attr('x',-h/2).attr('y',-40).attr('text-anchor','middle').style('fill','var(--text-muted)').text('10-YEAR ANNUALISED REAL RETURN');
-  returnEl._g=g;returnEl._xS=xS;returnEl._yS=yS;
+  g.append('text').attr('x',w).attr('y',-20).attr('text-anchor','end')
+    .attr('font-family','JetBrains Mono,monospace').attr('font-size','9px')
+    .attr('fill','var(--text-muted)').attr('opacity',0.85)
+    .text('SCROLL TO ZOOM \u00b7 DBL-CLICK TO RESET \u00b7 CLICK TO PIN / RELEASE');
 
-  // Hover interaction on scatter: find nearest dot, highlight in both charts
-  const retHl=g.append('g');
-  g.append('rect').attr('width',w).attr('height',h).attr('fill','transparent').attr('cursor','crosshair')
+  // (Re)position everything against the current (possibly zoomed) scales
+  function position(){
+    const xMax=xS0.domain()[1];
+    gridG.selectAll('line').data(zy.ticks(8)).join('line')
+      .attr('class','grid-line').attr('x1',0).attr('x2',w).attr('y1',d=>zy(d)).attr('y2',d=>zy(d));
+    zeroLine.attr('x1',0).attr('x2',w).attr('y1',zy(0)).attr('y2',zy(0));
+    bands.attr('x',b=>zx(Math.max(b.lo,0)))
+      .attr('width',b=>Math.max(0,zx(Math.min(b.hi,xMax))-zx(Math.max(b.lo,0))));
+    bandLabels
+      .attr('x',b=>(zx(Math.max(b.lo,0))+zx(Math.min(b.hi,xMax)))/2)
+      .attr('opacity',b=>{const cx=(zx(Math.max(b.lo,0))+zx(Math.min(b.hi,xMax)))/2;return cx>=0&&cx<=w?0.6:0;});
+    iqrBoxes.attr('x',b=>zx(Math.max(b.lo,0))+4)
+      .attr('width',b=>Math.max(0,zx(Math.min(b.hi===100?xMax:b.hi,xMax))-zx(Math.max(b.lo,0))-8))
+      .attr('y',b=>zy(b.p75)).attr('height',b=>Math.max(0,zy(b.p25)-zy(b.p75)));
+    medLines.attr('x1',b=>zx(Math.max(b.lo,0))+4)
+      .attr('x2',b=>zx(Math.min(b.hi===100?xMax:b.hi,xMax))-4)
+      .attr('y1',b=>zy(b.median)).attr('y2',b=>zy(b.median));
+    dots.attr('cx',d=>zx(d.capeYield)).attr('cy',d=>zy(d.fwdReturn));
+    lmCircles.attr('cx',d=>zx(d.pt.capeYield)).attr('cy',d=>zy(d.pt.fwdReturn));
+    lmLabels.attr('x',d=>zx(d.pt.capeYield)).attr('y',d=>d.above?zy(d.pt.fwdReturn)-8:zy(d.pt.fwdReturn)+13);
+    gx.call(d3.axisBottom(zx).ticks(10).tickSize(0).tickPadding(8).tickFormat(d=>d+'%')).selectAll('text').style('fill','var(--text-muted)');
+    gy.call(d3.axisLeft(zy).ticks(8).tickSize(0).tickPadding(8).tickFormat(d=>d+'%')).selectAll('text').style('fill','var(--text-secondary)');
+  }
+
+  returnEl._g=plotG; returnEl._xS=zx; returnEl._yS=zy;
+  position();
+
+  function nearest(mx,my){
+    let minDist=Infinity,closest=null;
+    sd.forEach(d=>{
+      const dx=zx(d.capeYield)-mx,dy=zy(d.fwdReturn)-my;
+      const dist=dx*dx+dy*dy;
+      if(dist<minDist){minDist=dist;closest=d;}
+    });
+    return minDist<=1200?closest:null;
+  }
+
+  // Interactions: hover previews, click pins, scroll/pinch zooms, drag pans
+  const overlay=g.append('rect').attr('width',w).attr('height',h)
+    .attr('fill','transparent').attr('cursor','crosshair');
+
+  const zoom=d3.zoom().scaleExtent([1,12])
+    .extent([[0,0],[w,h]]).translateExtent([[0,0],[w,h]])
+    .on('zoom',ev=>{
+      zx=ev.transform.rescaleX(xS0); zy=ev.transform.rescaleY(yS0);
+      returnEl._xS=zx; returnEl._yS=zy;
+      position();
+      updateReturnHighlight(pinnedReturn); // re-draw the pin at its new position, or clear
+    });
+  overlay.call(zoom).on('dblclick.zoom',null)
+    .on('dblclick',()=>overlay.transition().duration(300).call(zoom.transform,d3.zoomIdentity));
+
+  overlay
     .on('mousemove',function(ev){
+      if(pinnedReturn)return; // pinned selection holds until released
       const[mx,my]=d3.pointer(ev);
-      let minDist=Infinity,closest=null;
-      sd.forEach(d=>{
-        const dx=xS(d.capeYield)-mx,dy=yS(d.fwdReturn)-my;
-        const dist=dx*dx+dy*dy;
-        if(dist<minDist){minDist=dist;closest=d;}
-      });
-      if(!closest||minDist>1200){retHl.selectAll('*').remove();updateMainHighlight(null);updateReratingHighlight(null);return;}
+      const closest=nearest(mx,my);
+      if(!closest){updateReturnHighlight(null);updateMainHighlight(null);updateReratingHighlight(null);return;}
       updateReturnHighlight(closest);
       updateMainHighlight(closest);
       updateReratingHighlight(closest);
     })
     .on('mouseleave',function(){
-      retHl.selectAll('*').remove();
+      if(pinnedReturn)return;
       updateReturnHighlight(null);
       updateMainHighlight(null);
       updateReratingHighlight(null);
+    })
+    .on('click',function(ev){
+      const[mx,my]=d3.pointer(ev);
+      pinnedReturn=nearest(mx,my); // click empty space -> null -> release
+      updateReturnHighlight(pinnedReturn);
+      updateMainHighlight(pinnedReturn);
+      updateReratingHighlight(pinnedReturn);
     });
+
+  if(pinnedReturn)updateReturnHighlight(pinnedReturn); // survive re-renders (resize/sliders)
 }
 
 function updateReturnHighlight(datum) {
+  if (pinnedReturn) datum = pinnedReturn; // a pinned month overrides hover from any chart
   const g=returnEl._g,xS=returnEl._xS,yS=returnEl._yS;if(!g)return;const co=document.getElementById('return-callout');g.selectAll('.hl').remove();
   if(!datum||datum.capeYield==null){
     // Reset to default state

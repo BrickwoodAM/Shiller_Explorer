@@ -82,8 +82,11 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .return-chart-container { position:relative; background:var(--bg-panel); border-radius:10px; border:1px solid var(--border); padding:1.25rem 0.5rem 0.5rem; margin-bottom:1.5rem; box-shadow:0 1px 4px rgba(15,38,64,0.05); }
 .return-chart-container svg { display:block; }
 
-.bucket-status { display:flex; gap:1px; margin:0 39.5px 1rem 60.5px; background:var(--border); border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(15,38,64,0.06); }
-.bucket-card { flex:1; background:var(--bg-panel); padding:0.85rem 1rem; text-align:center; transition:all 0.3s; min-width:0; }
+.bucket-status { display:grid; grid-template-columns:calc((100% - 100px)/5 + 60.5px) repeat(3, calc((100% - 100px)/5)) calc((100% - 100px)/5 + 39.5px); margin-bottom:1rem; background:var(--bg-panel); border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(15,38,64,0.06); }
+.bucket-card + .bucket-card { border-left:1px solid var(--border); }
+.bucket-card:first-child { padding-left:calc(1rem + 60.5px); }
+.bucket-card:last-child { padding-right:calc(1rem + 39.5px); }
+.bucket-card { background:var(--bg-panel); padding:0.85rem 1rem; text-align:center; transition:all 0.3s; min-width:0; }
 .bucket-card:first-child { border-radius:8px 0 0 8px; } .bucket-card:last-child { border-radius:0 8px 8px 0; }
 .bucket-card.highlighted { background:var(--bg-hover); box-shadow:inset 0 -2px 0 var(--teal); }
 .bucket-range { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.3rem; }
@@ -169,8 +172,8 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .instructions { font-size:0.75rem; color:var(--text-muted); white-space:nowrap; }
 
 
-@media (max-width:900px) { .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar,.bucket-status { flex-wrap:wrap; } .bucket-status { margin-left:0; margin-right:0; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
-@media (max-width:600px) { header h1 { font-size:1.6rem; } .metric-card,.bucket-card { flex:1 1 100%; } .chart-footer { flex-direction:column; gap:1rem; } }
+@media (max-width:900px) { .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar { flex-wrap:wrap; } .bucket-status { grid-template-columns:1fr 1fr; } .bucket-card:first-child { padding-left:1rem; } .bucket-card:last-child { padding-right:1rem; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
+@media (max-width:600px) { header h1 { font-size:1.6rem; } .bucket-status { grid-template-columns:1fr; } .metric-card,.bucket-card { flex:1 1 100%; } .chart-footer { flex-direction:column; gap:1rem; } }
 </style>
 </head>
 <body>

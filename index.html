@@ -458,7 +458,7 @@ function renderReturnChart() {
   // House-style mean bars (live-computed), one per bucket, on the same y-axis as the dots
   const stats=bucketStats.filter(b=>b.n);
   const bars=barG.selectAll('rect').data(stats).join('rect')
-    .attr('fill','var(--light-blue)').attr('opacity',0.55)
+    .attr('fill','var(--light-blue)').attr('opacity',0.65)
     .attr('stroke','var(--teal)').attr('stroke-width',0.75).attr('stroke-opacity',0.35).attr('rx',2);
   const barLabels=barG.selectAll('text').data(stats).join('text')
     .attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
@@ -471,9 +471,9 @@ function renderReturnChart() {
 
   // Monthly dots — Brickwood monochrome; separation comes from the columns
   const dots=dotG.selectAll('circle').data(sd).join('circle')
-    .attr('class','scatter-dot').attr('r',2.5)
-    .attr('fill','var(--dark-navy)')
-    .attr('opacity',0.3);
+    .attr('class','scatter-dot').attr('r',2)
+    .attr('fill','var(--dark-navy)').attr('stroke','none')
+    .attr('opacity',0.13);
 
   // Labelled landmark dots — notable years that anchor the data to memory
   const landmarks=[
@@ -524,7 +524,7 @@ function renderReturnChart() {
     zeroLine.attr('x1',0).attr('x2',w).attr('y1',zy(0)).attr('y2',zy(0));
     bars.each(function(b){
       const x0=zx(b.lo),x1=zx(bandHi(b));
-      const pad=(x1-x0)*0.12;
+      const pad=3; // fixed gap so bars span the column and dots sit on them, at any zoom
       const yTop=zy(Math.max(b.mean,0)),yBot=zy(0);
       d3.select(this).attr('x',x0+pad).attr('width',Math.max(0,x1-x0-2*pad))
         .attr('y',yTop).attr('height',Math.max(0,yBot-yTop));
@@ -602,15 +602,17 @@ function updateReturnHighlight(datum) {
   const g=returnEl._g,xS=returnEl._xS,yS=returnEl._yS;if(!g)return;const co=document.getElementById('return-callout');g.selectAll('.hl').remove();
   if(!datum||datum.capeYield==null){
     // Reset to default state
-    g.selectAll('.scatter-dot').attr('fill','var(--dark-navy)').attr('opacity',0.3).attr('r',2.5);
+    g.selectAll('.scatter-dot').attr('fill','var(--dark-navy)').attr('stroke','none').attr('opacity',0.13).attr('r',2);
     renderBucketStatus(null);co.classList.remove('visible');return;
   }
   const bk=getBucket(datum.capeYield),bs=bucketStats.find(b=>b.label===bk?.label);
   // Highlight the hovered/pinned bucket in teal; fade the rest
   g.selectAll('.scatter-dot')
-    .attr('fill',d=>getBucket(d.capeYield)?.label===bk?.label?'var(--teal)':'var(--dark-navy)')
-    .attr('opacity',d=>getBucket(d.capeYield)?.label===bk?.label?0.65:0.08)
-    .attr('r',d=>getBucket(d.capeYield)?.label===bk?.label?3:1.5);
+    .attr('fill',d=>getBucket(d.capeYield)?.label===bk?.label?'none':'var(--dark-navy)')
+    .attr('stroke',d=>getBucket(d.capeYield)?.label===bk?.label?'var(--teal)':'none')
+    .attr('stroke-width',1.2)
+    .attr('opacity',d=>getBucket(d.capeYield)?.label===bk?.label?0.85:0.06)
+    .attr('r',d=>getBucket(d.capeYield)?.label===bk?.label?2.8:1.5);
   if(datum.fwdReturn!=null){g.append('circle').attr('class','hl').attr('cx',xS(datum.capeYield)).attr('cy',yS(datum.fwdReturn)).attr('r',7).attr('fill','none').attr('stroke','var(--dark-navy)').attr('stroke-width',2);g.append('circle').attr('class','hl').attr('cx',xS(datum.capeYield)).attr('cy',yS(datum.fwdReturn)).attr('r',4).attr('fill','var(--dark-navy)');}
   g.append('line').attr('class','hl').attr('x1',xS(datum.capeYield)).attr('x2',xS(datum.capeYield)).attr('y1',0).attr('y2',340-retMargin.top-retMargin.bottom).attr('stroke','rgba(15,38,64,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4,3');
   renderBucketStatus(bk);

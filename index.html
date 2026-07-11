@@ -201,7 +201,7 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
   <div class="vintage-chart-container" id="vintage-chart"></div>
 
   <div class="section-divider"><h2>How Confident Can We Be?</h2><div class="line"></div></div>
-  <p class="section-subtitle">This chart keeps the starting valuation you chose above and varies how long you hold. For every month in history that began at that valuation, it shows the annualised returns investors went on to earn over one year, two years, and so on up to ten. Over short holding periods the outcomes are scattered widely; the longer the holding period, the more tightly they cluster. Time helps convert uncertainty into probability.</p>
+  <p class="section-subtitle">This chart keeps the starting valuation you chose above and varies how long you hold. For each month in history that began at that valuation, it shows the annualised returns investors earned over different holding periods. Over short holding periods the outcomes are scattered widely; the longer the holding period, the more tightly they cluster. Time helps convert uncertainty into probability.</p>
   <div class="horizon-chart-container" id="horizon-chart"><div class="h-tooltip" id="h-tooltip"></div></div>
 
   <div class="section-divider"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
@@ -1242,6 +1242,11 @@ function renderHorizonChart() {
       if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
     const overflow = labels[labels.length - 1].y - (h + 3);
     if (overflow > 0) labels.forEach(l => l.y -= overflow);
+    // Caption: these figures describe the 10-year holding period specifically
+    g.append('text').attr('x', w + 8).attr('y', Math.max(10, labels[0].y - 16))
+      .attr('font-family', 'JetBrains Mono, monospace').attr('font-size', '8px')
+      .attr('letter-spacing', '0.08em').attr('fill', 'var(--text-muted)')
+      .text('AT 10 YEARS:');
     labels.forEach(l => {
       g.append('text').attr('x', w + 8).attr('y', l.y)
         .attr('font-family', 'JetBrains Mono, monospace')

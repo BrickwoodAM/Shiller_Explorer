@@ -454,6 +454,7 @@ function renderReturnChart() {
   // House-style mean bars (live-computed), one per bucket, on the same y-axis as the dots
   const stats=bucketStats.filter(b=>b.n);
   const bars=barG.selectAll('rect').data(stats).join('rect')
+    .attr('class','mean-bar')
     .attr('fill','var(--light-blue)').attr('opacity',0.65)
     .attr('stroke','var(--teal)').attr('stroke-width',0.75).attr('stroke-opacity',0.35).attr('rx',2);
 
@@ -604,17 +605,15 @@ function updateReturnHighlight(datum) {
   const g=returnEl._g,xS=returnEl._xS,yS=returnEl._yS;if(!g)return;const co=document.getElementById('return-callout');g.selectAll('.hl').remove();
   if(!datum||datum.capeYield==null){
     // Reset to default state
-    g.selectAll('.scatter-dot').attr('fill','var(--dark-navy)').attr('stroke','none').attr('opacity',0.13).attr('r',2);
+    g.selectAll('.mean-bar').attr('opacity',0.65).attr('stroke-opacity',0.35);
     renderBucketStatus(null);co.classList.remove('visible');return;
   }
   const bk=getBucket(datum.capeYield),bs=bucketStats.find(b=>b.label===bk?.label);
-  // Highlight the hovered/pinned bucket in teal; fade the rest
-  g.selectAll('.scatter-dot')
-    .attr('fill',d=>getBucket(d.capeYield)?.label===bk?.label?'none':'var(--dark-navy)')
-    .attr('stroke',d=>getBucket(d.capeYield)?.label===bk?.label?'var(--teal)':'none')
-    .attr('stroke-width',1.2)
-    .attr('opacity',d=>getBucket(d.capeYield)?.label===bk?.label?0.85:0.06)
-    .attr('r',d=>getBucket(d.capeYield)?.label===bk?.label?2.8:1.5);
+  // The average is the message: lift the bucket's bar (the card above highlights too);
+  // the dots stay light — only the selected month gets a marker below.
+  g.selectAll('.mean-bar')
+    .attr('opacity',b=>b.label===bk?.label?0.9:0.65)
+    .attr('stroke-opacity',b=>b.label===bk?.label?0.8:0.35);
   if(datum.fwdReturn!=null){g.append('circle').attr('class','hl').attr('cx',xS(datum.capeYield)).attr('cy',yS(datum.fwdReturn)).attr('r',7).attr('fill','none').attr('stroke','var(--dark-navy)').attr('stroke-width',2);g.append('circle').attr('class','hl').attr('cx',xS(datum.capeYield)).attr('cy',yS(datum.fwdReturn)).attr('r',4).attr('fill','var(--dark-navy)');}
   g.append('line').attr('class','hl').attr('x1',xS(datum.capeYield)).attr('x2',xS(datum.capeYield)).attr('y1',0).attr('y2',340-retMargin.top-retMargin.bottom).attr('stroke','rgba(15,38,64,0.2)').attr('stroke-width',1).attr('stroke-dasharray','4,3');
   renderBucketStatus(bk);

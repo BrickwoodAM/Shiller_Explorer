@@ -71,6 +71,16 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .annotation-line { stroke:rgba(15,38,64,0.15); stroke-width:1; stroke-dasharray:2,3; }
 .annotation-text { font-family:'Montserrat',sans-serif; font-size:10px; fill:var(--text-secondary); }
 .context-label { font-family:'JetBrains Mono',monospace; font-size:10px; fill:var(--text-muted); letter-spacing:0.05em; }
+html { scroll-behavior:smooth; }
+.side-nav { position:fixed; left:18px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:16px; z-index:100; }
+.side-nav a { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-dot { width:9px; height:9px; border-radius:50%; border:1.5px solid rgba(15,38,64,0.35); background:transparent; transition:all 0.2s; flex-shrink:0; }
+.side-nav a:hover .nav-dot { border-color:var(--teal); }
+.side-nav a.active .nav-dot { background:var(--teal); border-color:var(--teal); transform:scale(1.25); }
+.nav-label { font-family:'Montserrat',sans-serif; font-size:0.7rem; font-weight:500; letter-spacing:0.04em; color:var(--text-secondary); background:var(--bg-panel); border:1px solid var(--border); border-radius:5px; padding:0.25rem 0.55rem; white-space:nowrap; opacity:0; transform:translateX(-4px); transition:all 0.15s; pointer-events:none; box-shadow:0 1px 3px rgba(15,38,64,0.08); }
+.side-nav a:hover .nav-label, .side-nav a.active .nav-label { opacity:1; transform:translateX(0); }
+.side-nav a.active .nav-label { color:var(--teal); }
+@media (max-width:1200px) { .side-nav { display:none; } }
 .brush .selection { fill:rgba(80,145,165,0.10); stroke:var(--teal); stroke-opacity:0.6; stroke-width:1; }
 .brush .handle { fill:var(--teal); opacity:0.7; rx:2; }
 
@@ -177,6 +187,13 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 </style>
 </head>
 <body>
+<nav class="side-nav" id="side-nav" aria-label="Sections">
+  <a href="#metrics-bar" data-target="metrics-bar"><span class="nav-dot"></span><span class="nav-label">Timeline</span></a>
+  <a href="#sec-what" data-target="sec-what"><span class="nav-dot"></span><span class="nav-label">What CAPE Yield Tells Us</span></a>
+  <a href="#sec-pick" data-target="sec-pick"><span class="nav-dot"></span><span class="nav-label">Pick a Starting Valuation</span></a>
+  <a href="#sec-confident" data-target="sec-confident"><span class="nav-dot"></span><span class="nav-label">How Confident Can We Be?</span></a>
+  <a href="#sec-why" data-target="sec-why"><span class="nav-dot"></span><span class="nav-label">Why CAPE Yield Works</span></a>
+</nav>
 <div class="container">
   <header>
     <h1>The Importance of Valuation</h1>
@@ -189,24 +206,24 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
   <div class="chart-container" id="main-chart"><div class="tooltip" id="tooltip"></div></div>
   <div class="brush-context" id="brush-chart"></div>
 
-  <div class="section-divider"><h2>What CAPE Yield Tells Us</h2><div class="line"></div></div>
+  <div class="section-divider" id="sec-what"><h2>What CAPE Yield Tells Us</h2><div class="line"></div></div>
   <p class="section-subtitle">Since 1881, we know the CAPE yield each month and the real total return over the following 10 years. Higher yields (cheaper markets) have historically led to better future returns. Hover over the timeline to explore what happened from any starting month.</p>
   <div class="bucket-status" id="bucket-status"></div>
   <div class="return-chart-container" id="return-chart"><div class="return-callout" id="return-callout"></div></div>
 
 
-  <div class="section-divider"><h2>Pick a Starting Valuation</h2><div class="line"></div></div>
+  <div class="section-divider" id="sec-pick"><h2>Pick a Starting Valuation</h2><div class="line"></div></div>
   <p class="section-subtitle">Use the sliders to choose any starting CAPE yield &mdash; today's, or any other. Every month in history that began near that level stays highlighted while the rest fade, showing the full spread of what the next 10 years actually delivered from that starting point.</p>
   <div class="horizon-controls" id="horizon-controls"></div>
   <div class="vintage-chart-container" id="vintage-chart"></div>
 
-  <div class="section-divider"><h2>How Confident Can We Be?</h2><div class="line"></div></div>
+  <div class="section-divider" id="sec-confident"><h2>How Confident Can We Be?</h2><div class="line"></div></div>
   <p class="section-subtitle">This chart keeps the starting valuation you chose above and varies how long you hold. For each month in history that began at that valuation, it shows the annualised returns investors earned over different holding periods. Over short holding periods the outcomes are scattered widely; the longer the holding period, the more tightly they cluster. Time helps convert uncertainty into probability.</p>
   <div class="horizon-chart-container" id="horizon-chart"><div class="h-tooltip" id="h-tooltip"></div></div>
 
-  <div class="section-divider"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
+  <div class="section-divider" id="sec-why"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
   <p class="section-subtitle">Total return has two parts: the fundamental return the businesses deliver (income plus earnings growth), and the re-rating or de-rating investors apply to it.
-High valuations usually occur when the outlook is favourable. Yet history shows almost no relationship between the starting valuation and the fundamentals that follow &mdash; the teal dots lie nearly flat. What starting valuation does predict is the rating change: expensive markets tend to be followed by de-rating, and cheap markets by re-rating. That &mdash; not better fundamentals &mdash; is why starting yield matters.</p>
+High valuations usually occur when the outlook is favourable. Yet history shows almost no relationship between the valuation you start at and the fundamentals that follow &mdash; the teal dots lie nearly flat. What starting valuation does predict is the rating change: expensive markets tend to be followed by de-rating, and cheap markets by re-rating. That &mdash; not better fundamentals &mdash; is why starting yield matters.</p>
   <div class="controls-row"><div class="series-toggles" id="rerating-toggles"></div></div>
   <div class="decomp-chart-container" id="rerating-chart"></div>
 
@@ -1329,6 +1346,35 @@ function renderHorizonChart() {
 renderMetrics(); renderControls(); renderBucketStatus(null); renderReturnChart(); renderBrush();
 renderVintageChart(); renderHorizonControls(); renderHorizonChart();
 renderReratingToggles(); renderReratingChart();
+// ===== SCROLL-SPY SIDE NAV =====
+{
+  const links = [...document.querySelectorAll('#side-nav a')];
+  const targets = links.map(a => document.getElementById(a.dataset.target)).filter(Boolean);
+  function setActive(id) {
+    links.forEach(a => a.classList.toggle('active', a.dataset.target === id));
+  }
+  if ('IntersectionObserver' in window && targets.length) {
+    let current = targets[0].id;
+    const io = new IntersectionObserver(entries => {
+      // pick the topmost visible section marker
+      const vis = entries.filter(e => e.isIntersecting).map(e => e.target);
+      if (vis.length) current = vis.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)[0].id;
+      else {
+        // between markers: choose the last marker above the viewport middle
+        const above = targets.filter(t => t.getBoundingClientRect().top < window.innerHeight*0.4);
+        if (above.length) current = above[above.length-1].id;
+      }
+      setActive(current);
+    }, { rootMargin: '-10% 0px -55% 0px' });
+    targets.forEach(t => io.observe(t));
+    window.addEventListener('scroll', () => {
+      const above = targets.filter(t => t.getBoundingClientRect().top < window.innerHeight*0.4);
+      setActive(above.length ? above[above.length-1].id : targets[0].id);
+    }, { passive: true });
+    setActive(current);
+  }
+}
+
 let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { renderMain(); renderBrush(); renderReturnChart(); renderVintageChart(); renderHorizonChart(); renderReratingChart(); }, 150); });
 })();
 </script>

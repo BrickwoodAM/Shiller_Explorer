@@ -75,13 +75,12 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .section-divider { display:flex; align-items:center; gap:1rem; margin:2.5rem 0 1.5rem; }
 .section-divider h2 { font-family:'Bellefair',Georgia,serif; font-size:1.6rem; font-weight:400; white-space:nowrap; color:var(--teal); }
 .section-divider .line { flex:1; height:1px; background:var(--border); }
-.rc-title { font-family:'Bellefair',Georgia,serif; font-size:1.25rem; color:var(--dark-navy); margin:0.25rem 0 0.75rem; letter-spacing:0.01em; }
 .section-subtitle { font-weight:400; font-size:0.92rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6; max-width:720px; }
 
 .return-chart-container { position:relative; background:var(--bg-panel); border-radius:10px; border:1px solid var(--border); padding:1.25rem 0.5rem 0.5rem; margin-bottom:1.5rem; box-shadow:0 1px 4px rgba(15,38,64,0.05); }
 .return-chart-container svg { display:block; }
 
-.bucket-status { display:flex; gap:1px; margin-bottom:1rem; background:var(--border); border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(15,38,64,0.06); }
+.bucket-status { display:flex; gap:1px; margin:0 39.5px 1rem 60.5px; background:var(--border); border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(15,38,64,0.06); }
 .bucket-card { flex:1; background:var(--bg-panel); padding:0.85rem 1rem; text-align:center; transition:all 0.3s; min-width:0; }
 .bucket-card:first-child { border-radius:8px 0 0 8px; } .bucket-card:last-child { border-radius:0 8px 8px 0; }
 .bucket-card.highlighted { background:var(--bg-hover); box-shadow:inset 0 -2px 0 var(--teal); }
@@ -168,7 +167,7 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
 .instructions { font-size:0.75rem; color:var(--text-muted); white-space:nowrap; }
 
 
-@media (max-width:900px) { .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar,.bucket-status { flex-wrap:wrap; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
+@media (max-width:900px) { .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar,.bucket-status { flex-wrap:wrap; } .bucket-status { margin-left:0; margin-right:0; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
 @media (max-width:600px) { header h1 { font-size:1.6rem; } .metric-card,.bucket-card { flex:1 1 100%; } .chart-footer { flex-direction:column; gap:1rem; } }
 </style>
 </head>
@@ -188,7 +187,6 @@ header .byline { font-size:0.75rem; color:var(--text-muted); margin-top:1.25rem;
   <div class="section-divider"><h2>What CAPE Yield Tells Us</h2><div class="line"></div></div>
   <p class="section-subtitle">Since 1881, we know the CAPE yield each month and the real total return over the following 10 years. Higher yields (cheaper markets) have historically led to better future returns. Hover over the timeline to explore what happened from any starting month.</p>
   <div class="bucket-status" id="bucket-status"></div>
-  <div class="rc-title" id="return-chart-title"></div>
   <div class="return-chart-container" id="return-chart"><div class="return-callout" id="return-callout"></div></div>
 
   <div class="section-divider"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
@@ -258,8 +256,6 @@ const formatPct = d3.format('.2f');
   const [ly, lmn] = [last.slice(0,4), last.slice(5,7)];
   const el = document.getElementById('source-end-date');
   if (el) el.textContent = `01.${lmn}.${ly}`;
-  const tt = document.getElementById('return-chart-title');
-  if (tt) tt.textContent = `Relationship between CAPE yield and subsequent 10 year real return, 1871 \u2013 ${ly}`;
 }
 
 const data = RAW.d.map(d => ({
@@ -460,10 +456,7 @@ function renderReturnChart() {
   const bars=barG.selectAll('rect').data(stats).join('rect')
     .attr('fill','var(--light-blue)').attr('opacity',0.65)
     .attr('stroke','var(--teal)').attr('stroke-width',0.75).attr('stroke-opacity',0.35).attr('rx',2);
-  const barLabels=barG.selectAll('text').data(stats).join('text')
-    .attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
-    .attr('font-size','12px').attr('font-weight','600').attr('fill','var(--dark-navy)')
-    .text(b=>formatDec(b.mean)+'%');
+
 
   // Column boundaries (physical separation between buckets)
   const bounds=boundG.selectAll('line').data(EDGES.slice(1,-1)).join('line')
@@ -495,10 +488,19 @@ function renderReturnChart() {
     .attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
     .attr('font-size','8px').attr('fill','rgba(15,38,64,0.5)').text(d=>d.label);
 
+  // Bar value labels sit above the dot layer, with a white halo for legibility
+  const barLabelG=plotG.append('g');
+  const barLabels=barLabelG.selectAll('text').data(stats).join('text')
+    .attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
+    .attr('font-size','12px').attr('font-weight','600').attr('fill','var(--teal)')
+    .attr('stroke','#ffffff').attr('stroke-width',3.5).attr('stroke-linejoin','round')
+    .style('paint-order','stroke')
+    .text(b=>formatDec(b.mean)+'%');
+
   // Bucket header labels under the columns, matching the house slide
   const bandLabels=g.append('g').selectAll('text').data(BUCKETS).join('text')
     .attr('y',h+18).attr('text-anchor','middle').attr('font-family','JetBrains Mono,monospace')
-    .attr('font-size','10px').attr('font-weight','500').attr('fill','var(--dark-navy)').text(b=>b.label);
+    .attr('font-size','10px').attr('font-weight','500').attr('fill','var(--text-secondary)').text(b=>b.label);
 
   // MOST EXPENSIVE / CHEAPEST strip, as on the house slide
   g.append('text').attr('x',0).attr('y',h+34).attr('font-family','JetBrains Mono,monospace')

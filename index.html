@@ -682,7 +682,7 @@ function updateReturnHighlight(datum) {
 // ===== CHART 4: MEAN-REVERSION SCATTER =====
 const MC_POS_COLOR = '#4AE89D';
 const MC_NEG_COLOR = '#E86A6A';
-const FUNDAMENTAL_COLOR = '#6AB4E8';
+const FUNDAMENTAL_COLOR = '#5091A5'; // brand teal
 function mcLabel(v) { return v != null && v < 0 ? 'De-rating' : 'Re-rating'; }
 function mcColor(v) { return v != null && v < 0 ? MC_NEG_COLOR : MC_POS_COLOR; }
 
@@ -691,15 +691,20 @@ const decomp10 = DECOMP_RAW ? DECOMP_RAW.decomp10 : {};
 Object.values(decomp10).forEach(d => { if(!d.fr) d.fr = Math.round(((1+d.ir/100)*(1+d.eg/100)-1)*100*100)/100; });
 
 const RERATING_LAYERS = {
-  rating: { label: 'Re/De-rating', active: true, color: MC_POS_COLOR },
+  rating: { label: 'Re-rating / De-rating', active: true, color: MC_POS_COLOR },
   fundamental: { label: 'Fundamental Return', active: true, color: FUNDAMENTAL_COLOR },
 };
 
 function renderReratingToggles() {
   const container = document.getElementById('rerating-toggles');
-  container.innerHTML = Object.entries(RERATING_LAYERS).map(([k,v]) =>
-    `<button class="series-btn ${v.active?'active':''}" data-layer="${k}"><span class="series-dot" style="background:${v.color}"></span>${v.label}</button>`
-  ).join('');
+  container.innerHTML = Object.entries(RERATING_LAYERS).map(([k,v]) => {
+    // The rating layer is one series whose SIGN carries the meaning, so its
+    // swatch shows both colours: green re-rating, red de-rating.
+    const swatch = k === 'rating'
+      ? `<span class="series-dot" style="background:${MC_POS_COLOR}"></span><span class="series-dot" style="background:${MC_NEG_COLOR};margin-left:-5px"></span>`
+      : `<span class="series-dot" style="background:${v.color}"></span>`;
+    return `<button class="series-btn ${v.active?'active':''}" data-layer="${k}">${swatch}${v.label}</button>`;
+  }).join('');
   container.querySelectorAll('.series-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.dataset.layer;
@@ -745,11 +750,9 @@ function renderReratingChart() {
   const svg = d3.select(el).append('svg').attr('width', width).attr('height', h);
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Y domain adapts to visible layers
-  const visibleY = pts.flatMap(d => [
-    ...(showRating ? [d.mc] : []),
-    ...(showFundamental ? [d.fr] : []),
-  ]);
+  // Static y-domain across BOTH layers, so toggling doesn't rescale the axis
+  // and the eye can compare the two clouds against a fixed frame.
+  const visibleY = pts.flatMap(d => [d.mc, d.fr]);
   const xS = d3.scaleLinear().domain(d3.extent(pts, d => d.cy)).range([0, w]).nice();
   const yMin = d3.min(visibleY), yMax = d3.max(visibleY);
   const yPad = Math.max((yMax - yMin) * 0.1, 0.5);
@@ -773,35 +776,41 @@ function renderReratingChart() {
       .attr('fill', d => d.mc < 0 ? MC_NEG_COLOR : MC_POS_COLOR).attr('opacity', 0.45);
   }
 
-  // OLS regression on mc vs cy (only when rating visible)
-  if (showRating) {
+  // OLS trend lines for both layers. The chart's whole argument lives here:
+  // re/de-rating is strongly related to starting yield, fundamental return is not.
+  function ols(get) {
     const n = pts.length;
-    const sx = d3.sum(pts, d => d.cy), sy = d3.sum(pts, d => d.mc);
-    const sxx = d3.sum(pts, d => d.cy*d.cy), sxy = d3.sum(pts, d => d.cy*d.mc);
+    const sx = d3.sum(pts, d => d.cy), sy = d3.sum(pts, get);
+    const sxx = d3.sum(pts, d => d.cy*d.cy), sxy = d3.sum(pts, d => d.cy*get(d));
     const slope = (n*sxy - sx*sy) / (n*sxx - sx*sx);
     const intercept = (sy - slope*sx) / n;
-    const yHat = pts.map(d => intercept + slope*d.cy);
-    const ssTot = d3.sum(pts.map((d,i) => (d.mc - sy/n)**2));
-    const ssRes = d3.sum(pts.map((d,i) => (d.mc - yHat[i])**2));
-    const r2 = 1 - ssRes/ssTot;
-
-    const xDom = xS.domain();
-    g.append('line')
-      .attr('x1', xS(xDom[0])).attr('y1', yS(intercept + slope*xDom[0]))
-      .attr('x2', xS(xDom[1])).attr('y2', yS(intercept + slope*xDom[1]))
-      .attr('stroke', '#0F2640').attr('stroke-width', 1.5).attr('stroke-dasharray', '6,4').attr('opacity', 0.7);
-
-    g.append('text').attr('x', xS(xDom[1])-4).attr('y', yS(intercept + slope*xDom[1])-10)
-      .attr('text-anchor','end').attr('font-family','JetBrains Mono,monospace').attr('font-size','9px')
-      .attr('fill','var(--text-muted)')
-      .text(`R\u00b2 = ${r2.toFixed(2)}`);
+    const ssTot = d3.sum(pts.map(d => (get(d) - sy/n)**2));
+    const ssRes = d3.sum(pts.map(d => (get(d) - (intercept + slope*d.cy))**2));
+    return { slope, intercept, r2: 1 - ssRes/ssTot };
   }
+  const xDom = xS.domain();
+  function trendLine(fit, colour, label, labelDy) {
+    g.append('line')
+      .attr('x1', xS(xDom[0])).attr('y1', yS(fit.intercept + fit.slope*xDom[0]))
+      .attr('x2', xS(xDom[1])).attr('y2', yS(fit.intercept + fit.slope*xDom[1]))
+      .attr('stroke', colour).attr('stroke-width', 1.5).attr('stroke-dasharray', '6,4').attr('opacity', 0.75);
+    g.append('text').attr('x', xS(xDom[1])-4).attr('y', yS(fit.intercept + fit.slope*xDom[1])+labelDy)
+      .attr('text-anchor','end').attr('font-family','JetBrains Mono,monospace').attr('font-size','9px')
+      .attr('fill', colour)
+      .text(`${label} R\u00b2 = ${fit.r2.toFixed(2)}`);
+  }
+  if (showRating) trendLine(ols(d => d.mc), '#0F2640', 'RE/DE-RATING', -10);
+  if (showFundamental) trendLine(ols(d => d.fr), FUNDAMENTAL_COLOR, 'FUNDAMENTAL', 16);
 
   // Axes
   g.append('g').attr('class','axis-x').attr('transform',`translate(0,${ih})`).call(d3.axisBottom(xS).ticks(8).tickSize(-ih).tickPadding(8).tickFormat(d => d + '%'));
   g.append('g').attr('class','axis-y-left').call(d3.axisLeft(yS).ticks(8).tickSize(0).tickPadding(8).tickFormat(d => d + '%'));
   g.append('text').attr('class','axis-label').attr('x', w/2).attr('y', ih+38).attr('text-anchor','middle').style('fill','var(--text-muted)').text('CAPE YIELD (STARTING VALUATION)');
-  g.append('text').attr('class','axis-label').attr('transform',`translate(-40,${ih/2}) rotate(-90)`).attr('text-anchor','middle').style('fill','var(--text-muted)').text('10-YEAR ANNUALISED REAL RETURN');
+  g.append('text').attr('class','axis-label').attr('transform',`translate(-40,${ih/2}) rotate(-90)`).attr('text-anchor','middle').style('fill','var(--text-muted)').text('CONTRIBUTION TO 10Y RETURN (% P.A.)');
+  g.append('text').attr('x',0).attr('y',-8)
+    .attr('font-family','JetBrains Mono,monospace').attr('font-size','9px')
+    .attr('fill','var(--text-muted)').attr('opacity',0.85)
+    .text('10-YEAR RETURN = FUNDAMENTAL (INCOME + EARNINGS GROWTH) \u00d7 RE/DE-RATING');
 
   // Tooltip
   const tt = document.createElement('div');

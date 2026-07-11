@@ -191,13 +191,13 @@ html { scroll-behavior:smooth; }
   <a href="#page-top" data-target="page-top"><span class="nav-dot"></span><span class="nav-label">Timeline</span></a>
   <a href="#sec-what" data-target="sec-what"><span class="nav-dot"></span><span class="nav-label">What CAPE Yield Tells Us</span></a>
   <a href="#sec-pick" data-target="sec-pick"><span class="nav-dot"></span><span class="nav-label">Pick a Starting Valuation</span></a>
-  <a href="#sec-confident" data-target="sec-confident"><span class="nav-dot"></span><span class="nav-label">How Confident Can We Be?</span></a>
+  <a href="#sec-confident" data-target="sec-confident"><span class="nav-dot"></span><span class="nav-label">What Difference Does Time Make?</span></a>
   <a href="#sec-why" data-target="sec-why"><span class="nav-dot"></span><span class="nav-label">Why CAPE Yield Works</span></a>
 </nav>
 <div class="container">
   <header id="page-top">
     <h1>The Importance of Valuation</h1>
-    <p class="subtitle">155 years of U.S. stock market valuations, measured by CAPE Yield: the cyclically adjusted real earnings per dollar invested.</p>
+    <p class="subtitle">155 years of U.S. stock market history, built around one question: how much profit do the businesses make for every dollar you pay for them? That is the CAPE yield. It uses ten years of inflation-adjusted profit to smooth out booms and busts. A high yield means a cheap market; a low yield, an expensive one.</p>
     <p class="byline">Data: Prof. Robert J. Shiller, Yale University &middot; Updated Monthly</p>
   </header>
 
@@ -207,23 +207,24 @@ html { scroll-behavior:smooth; }
   <div class="brush-context" id="brush-chart"></div>
 
   <div class="section-divider" id="sec-what"><h2>What CAPE Yield Tells Us</h2><div class="line"></div></div>
-  <p class="section-subtitle">Since 1881, we can measure the CAPE yield of the US stock market, and track the real total return over the following 10 years. Higher yields (cheaper markets) have historically led to better future returns. Hover over the timeline to explore what happened from any starting month.</p>
+  <p class="section-subtitle">Since 1881, we can measure the CAPE yield of the US stock market, and track the real total return over the following 10 years. Each dot below is a single month: the further right it sits, the cheaper the market was at the time. The higher it sits, the better the following decade turned out. The bars show the average for each valuation bucket. Cheaper starting points have, on average, been followed by better returns.</p>
   <div class="bucket-status" id="bucket-status"></div>
   <div class="return-chart-container" id="return-chart"><div class="return-callout" id="return-callout"></div></div>
 
 
   <div class="section-divider" id="sec-pick"><h2>Pick a Starting Valuation</h2><div class="line"></div></div>
-  <p class="section-subtitle">Use the sliders to choose any starting CAPE yield, including today's. The months that began near that level stay highlighted, and the chart shows the range of 10-year returns that followed.</p>
+  <p class="section-subtitle">Use the sliders to choose any starting CAPE yield, including today's. Each tile below is one month, stacked into rows by the 10-year return that followed. The months that began near your chosen level stay highlighted, and together they show the range of outcomes from that starting valuation.</p>
   <div class="horizon-controls" id="horizon-controls"></div>
   <div class="vintage-chart-container" id="vintage-chart"></div>
 
-  <div class="section-divider" id="sec-confident"><h2>How Confident Can We Be?</h2><div class="line"></div></div>
+  <div class="section-divider" id="sec-confident"><h2>What Difference Does Time Make?</h2><div class="line"></div></div>
   <p class="section-subtitle">This chart keeps the starting valuation you chose above. For each month in history that began at that valuation, it shows the annualised returns investors earned over different holding periods. Over short holding periods the outcomes are scattered widely; the longer the holding period, the more tightly they cluster. Time helps convert uncertainty into probability.</p>
   <div class="horizon-chart-container" id="horizon-chart"><div class="h-tooltip" id="h-tooltip"></div></div>
 
   <div class="section-divider" id="sec-why"><h2>Why CAPE Yield Works</h2><div class="line"></div></div>
-  <p class="section-subtitle">Total return has two parts: the fundamental return the businesses deliver (income plus earnings growth), and the change in the valuation the market puts on those fundamentals, a re-rating when it rises and a de-rating when it falls.
-High valuations usually occur when the outlook is favourable. Yet history shows almost no relationship between the valuation you start at and the fundamentals that follow. The teal dots lie nearly flat. What starting valuation does predict is the rating change: expensive markets tend to be followed by de-rating, and cheap markets by re-rating. That, not better fundamentals, is why starting yield matters.</p>
+  <p class="section-subtitle">The charts above show that the price you pay shapes the return you get. This chart shows why.
+Owning shares pays you in two ways. First, the businesses themselves deliver a return: dividends, plus growth in their profits. Second, the valuation moves: over time the market may pay more for each dollar of those profits (a re-rating) or less (a de-rating).
+Expensive markets usually reflect a favourable outlook. But history shows the businesses went on to deliver much the same fundamental return whatever price you paid: the teal dots lie nearly flat. What the starting price does predict is the change in valuation. Buy expensive, and the market usually pays less for each dollar of profits a decade later. Buy cheap, and it usually pays more. That, not better fundamentals, is why starting valuation matters.</p>
   <div class="controls-row"><div class="series-toggles" id="rerating-toggles"></div></div>
   <div class="decomp-chart-container" id="rerating-chart"></div>
 

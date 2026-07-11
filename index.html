@@ -1312,9 +1312,12 @@ function renderHorizonChart() {
         tt.innerHTML = html;
         tt.classList.add('visible');
         const rect = hEl.getBoundingClientRect();
-        let tx = xScale(hz.yr) + hMargin.left + 16;
-        // Flip left before the tooltip can enter the end-label column on the right
-        if (tx + 210 > rect.width - hMargin.right) tx = xScale(hz.yr) + hMargin.left - 220;
+        // Follow the hovered column for early years, then pin in one place for
+        // the later ones (no left/right jitter). The cap is computed to clear
+        // both the top-right legend and the end-label column.
+        const legendX = width - hMargin.right - 180;
+        const maxTx = Math.max(hMargin.left + 8, legendX - 226);
+        let tx = Math.min(xScale(hz.yr) + hMargin.left + 16, maxTx);
         tt.style.left = tx + 'px';
         tt.style.top = '30px';
       })

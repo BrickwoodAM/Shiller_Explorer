@@ -59,6 +59,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SLIM_PATH = REPO_ROOT / "shiller_slim_v3_fixed.json"
 HORIZON_PATH = REPO_ROOT / "shiller_horizon_data.json"
 DECOMP_PATH = REPO_ROOT / "shiller_decomp_full.json"
+INDEX_PATH = REPO_ROOT / "index.html"
 
 PAGE_URL = "https://shillerdata.com/"
 # Documented fallback if scraping ever fails (the ?ver= changes over time):
@@ -421,6 +422,27 @@ def update_files(slim, horizon, decomp):
     return changed
 
 
+# index.html carries the data span in prose ("155 years of U.S. stock market
+# ..."), in both the <meta name="description"> and the page subtitle. Everything
+# else on the page (latest yield, "Today" button, footer end date) is computed
+# from the JSONs at load time, but the meta tag is read by crawlers without
+# JavaScript, so the span is patched here at update time instead.
+YEARS_RE = re.compile(r"\b\d{2,3} years of U\.S\. stock market")
+
+
+def update_index_years(first_date: str, last_date: str) -> bool:
+    years = int(last_date[:4]) - int(first_date[:4])
+    html = INDEX_PATH.read_text(encoding="utf-8")
+    new_html, n = YEARS_RE.subn(f"{years} years of U.S. stock market", html)
+    if n == 0:
+        # Don't block a data update over copy: warn loudly and move on.
+        print("WARNING: index.html year-span phrase not found; "
+              "page text may need a manual update", file=sys.stderr)
+        return False
+    print(f"index.html: data span is {years} years ({n} phrase(s))")
+    return write_if_changed(INDEX_PATH, new_html)
+
+
 # ------------------------------------------------------------------- main --
 
 def main(xls_path: str | None = None):
@@ -443,6 +465,7 @@ def main(xls_path: str | None = None):
     print(f"decomp: series {len(decomp['series'])}, decomp10 {len(decomp['decomp10'])}")
 
     changed = update_files(slim, horizon, decomp)
+    changed |= update_index_years(rows[0]["date"], rows[-1]["date"])
     if not xls_path:
         path.unlink(missing_ok=True)  # don't leave the raw xls in the repo
     print("DATA_CHANGED" if changed else "NO_CHANGES")

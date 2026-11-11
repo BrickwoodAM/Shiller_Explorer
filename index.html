@@ -146,6 +146,13 @@ html { scroll-behavior:smooth; }
   background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:1.25rem 0.5rem 0.5rem; margin-bottom:2rem; min-height:100px; position:relative; box-shadow:0 1px 4px rgba(15,38,64,0.05);
 }
 .vintage-chart-container svg { display:block; }
+.vintage-stats { display:flex; justify-content:flex-end; align-items:baseline; flex-wrap:wrap; gap:0.35rem 1.5rem; padding:0 40px 0.6rem 1rem; font-family:'JetBrains Mono',monospace; }
+.vintage-stats .vs-cap { font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-right:auto; padding-left:84px; }
+.vintage-stats .vs-item { display:flex; align-items:baseline; gap:0.45rem; white-space:nowrap; }
+.vintage-stats .vs-k { font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+.vintage-stats .vs-v { font-size:0.85rem; color:var(--text-secondary); }
+.vintage-stats .vs-mean .vs-k { color:var(--text-secondary); }
+.vintage-stats .vs-mean .vs-v { font-size:1rem; font-weight:500; }
 .vintage-empty { display:flex; align-items:center; justify-content:center; height:140px; color:var(--text-muted); font-style:italic; font-size:0.9rem; }
 
 .horizon-chart-container {
@@ -182,7 +189,8 @@ html { scroll-behavior:smooth; }
 .instructions { font-size:0.75rem; color:var(--text-muted); white-space:nowrap; }
 
 
-@media (max-width:900px) { .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar { flex-wrap:wrap; } .bucket-status { grid-template-columns:1fr 1fr; } .bucket-card:first-child { padding-left:1rem; } .bucket-card:last-child { padding-right:1rem; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
+@media (max-width:900px) { .vintage-stats { justify-content:flex-start; padding:0 1rem 0.6rem; } .vintage-stats .vs-cap { flex-basis:100%; padding-left:0; }
+  .container { padding:1.25rem; } header h1 { font-size:2rem; } .metrics-bar { flex-wrap:wrap; } .bucket-status { grid-template-columns:1fr 1fr; } .bucket-card:first-child { padding-left:1rem; } .bucket-card:last-child { padding-right:1rem; } .metric-card,.bucket-card { flex:1 1 45%; } .horizon-controls { gap:1rem; } }
 @media (max-width:600px) { header h1 { font-size:1.6rem; } .bucket-status { grid-template-columns:1fr; } .metric-card,.bucket-card { flex:1 1 100%; } .chart-footer { flex-direction:column; gap:1rem; } }
 </style>
 </head>
@@ -918,6 +926,23 @@ function updateReratingHighlight(datum) {
 
 
 
+// ===== SELECTED STARTING VALUATION: 10-YEAR OUTCOMES =====
+// The months that began inside the slider range AND have a completed 10-year
+// return. Recent months (the last ten years) match on yield but have no outcome
+// yet, so they are left out of the count and the stats. Used by the tile chart's
+// summary strip and by the "Matching" count beside the sliders.
+function tenYearOutcomes() {
+  const lo = hYield - hWindow, hi = hYield + hWindow;
+  const vals = data
+    .filter(d => d.capeYield != null && d.fwdReturn != null && d.capeYield >= lo && d.capeYield < hi)
+    .map(d => d.fwdReturn).sort((a, b) => a - b);
+  const n = vals.length;
+  if (!n) return { n };
+  // Same definitions as the 10-year column of the holding-period chart below
+  return { n, mean: d3.mean(vals), min: vals[0], max: vals[n - 1],
+           p25: d3.quantile(vals, 0.25), p75: d3.quantile(vals, 0.75) };
+}
+
 // ===== CHART 4: HORIZONTAL TILE HISTOGRAM =====
 const fmtMY = d3.timeFormat('%b %Y');
 const fmtYr = d3.timeFormat('%Y');
@@ -950,7 +975,7 @@ function renderVintageChart() {
   // Cell sizing: 15px tall, with visible gaps. Width adapts so the longest
   // row fits where possible; if not even 2px cells fit, rows truncate with a +N flag.
   const cellH = 15, cellGap = 1;
-  const marginLeft = 100, marginRight = 40, marginTop = 28, marginBottom = 20;
+  const marginLeft = 100, marginRight = 40, marginTop = 8, marginBottom = 20;
   const maxStack = d3.max(bucketKeys, k => stacks[k].length);
   const availW = el.clientWidth - 16 - marginLeft - marginRight;
   const cellW = Math.min(5, Math.max(2, availW / maxStack - cellGap));
@@ -959,6 +984,26 @@ function renderVintageChart() {
 
   const nRows = bucketKeys.length;
   const containerW = el.clientWidth - 16;
+
+  // Summary strip above the tiles: the 10-year outcomes of the highlighted months
+  const st = tenYearOutcomes();
+  const stats = document.createElement('div');
+  stats.className = 'vintage-stats';
+  const months = n => `${n} month${n === 1 ? '' : 's'}`;
+  const item = (k, v, cls = '', col = '') =>
+    `<span class="vs-item ${cls}"><span class="vs-k">${k}</span><span class="vs-v"${col ? ` style="color:${col}"` : ''}>${formatDec(v)}%</span></span>`;
+  if (!st.n) {
+    stats.innerHTML = `<span class="vs-cap">No months in this range have a 10-year return yet</span>`;
+  } else {
+    const meanCol = st.mean < 0 ? 'var(--accent-return-neg)' : 'var(--teal)';
+    // Percentiles and best/worst need at least 3 months, as in the chart below
+    const full = st.n >= 3;
+    stats.innerHTML = `<span class="vs-cap">10-year return p.a. \u00b7 ${months(st.n)}</span>`
+      + (full ? item('Worst', st.min) + item('25th pctl', st.p25) : '')
+      + item('Mean', st.mean, 'vs-mean', meanCol)
+      + (full ? item('75th pctl', st.p75) + item('Best', st.max) : '');
+  }
+  el.appendChild(stats);
   const totalH = marginTop + nRows * (cellH + rowGap) - rowGap + marginBottom;
 
   const svg = d3.select(el).append('svg')
@@ -971,17 +1016,6 @@ function renderVintageChart() {
     .attr('text-anchor', 'middle')
     .style('fill', 'var(--text-muted)')
     .text('10-YEAR ANNUALISED REAL RETURN');
-
-  // Summary annotation
-  const matches = all.filter(d => d.capeYield >= ylo && d.capeYield < yhi);
-  const nMatch = matches.length;
-  const mean = nMatch ? d3.mean(matches, d => d.fwdReturn) : 0;
-  if (nMatch) {
-    const meanCol = mean < 0 ? 'var(--accent-return-neg)' : 'var(--teal)';
-    svg.append('text').attr('x', containerW - marginRight).attr('y', 16).attr('text-anchor', 'end')
-      .attr('font-family', 'JetBrains Mono, monospace').attr('font-size', '11px').attr('font-weight', '500').attr('fill', meanCol)
-      .text(`Mean: ${formatDec(mean)}% p.a.`);
-  }
 
   // Draw rows: each row = a return bucket, cells grow left-to-right
   // Active cells packed to the left (adjacent to y-axis), inactive after
@@ -1071,9 +1105,9 @@ let hWindow = 1.0;
 
 function updateHorizonSummary() {
   const lo = hYield - hWindow, hi = hYield + hWindow;
-  const n = HORIZON ? HORIZON.filter(d => d.cy >= lo && d.cy < hi).length : 0;
+  const n = tenYearOutcomes().n;
   const eN = document.querySelector('#horizon-controls .hs-n');
-  if (eN) eN.textContent = `${n} months`;
+  if (eN) eN.textContent = `${n} month${n === 1 ? '' : 's'}`;
   const eR = document.getElementById('hs-range');
   if (eR) eR.textContent = `${formatPct(lo)}% \u2013 ${formatPct(hi)}%`;
 }
@@ -1081,7 +1115,7 @@ function updateHorizonSummary() {
 function renderHorizonControls() {
   const el = document.getElementById('horizon-controls');
   const lo = hYield - hWindow, hi = hYield + hWindow;
-  const n = HORIZON ? HORIZON.filter(d => d.cy >= lo && d.cy < hi).length : 0;
+  const n = tenYearOutcomes().n;
   const todayCy = [...data].reverse().find(d => d.capeYield != null)?.capeYield ?? 5;
 
   el.innerHTML = `
@@ -1099,8 +1133,8 @@ function renderHorizonControls() {
         <div class="slider-value" id="window-val">\u00b1 ${formatPct(hWindow)}%</div>
       </div>
     </div>
-    <div class="horizon-summary">
-      Matching: <span class="hs-n">${n} months</span><br>
+    <div class="horizon-summary" title="Months that began in this yield range and have a completed 10-year return">
+      Matching: <span class="hs-n">${n} month${n === 1 ? '' : 's'}</span><br>
       Range: <span id="hs-range">${formatPct(lo)}% \u2013 ${formatPct(hi)}%</span>
     </div>
     <button class="series-btn" id="today-yield-btn" title="Set the slider to the current CAPE yield">Today: ${formatPct(todayCy)}%</button>`;
